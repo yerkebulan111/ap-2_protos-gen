@@ -1,0 +1,49 @@
+name: Generate Go from Proto
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install protoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Clone Proto Files Repository
+        run: |
+          git clone https://github.com/yerkebulan111/ap-2_protos.git
+
+      - name: Clone Generated Code Repository
+        run: |
+          git clone https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/yerkebulan111/ap-2_protos-gen.git
+
+      - name: Generate Go Code from Proto Files
+        run: |
+          cd ap2-protos
+          protoc \
+            --go_out=../ap2-protos-gen \
+            --go_opt=paths=source_relative \
+            --go-grpc_out=../ap2-protos-gen \
+            --go-grpc_opt=paths=source_relative \
+            -I . \
+            -I $(go env GOPATH)/pkg/mod/github.com/googleapis/googleapis@latest \
+            payment/payment.proto \
+            order/order.proto
+
+      - name: Push Generated Files
+        run: |
+          cd ap2-protos-gen
+          git config user.email "you@example.com"
+          git config user.name "yerkebulan111"
+          git add .
+          git diff --cached --quiet || git commit -m "auto: regenerate from proto"
+          git push origin main
