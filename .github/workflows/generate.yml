@@ -16,6 +16,8 @@ jobs:
           sudo apt-get install -y protobuf-compiler
           go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+          # We also need this to handle the timestamp.proto imports
+          git clone --depth 1 https://github.com/googleapis/googleapis.git
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Clone Proto Files Repository
@@ -28,22 +30,25 @@ jobs:
 
       - name: Generate Go Code from Proto Files
         run: |
-          cd ap2-protos
+          # Use the EXACT name from the clone step above
+          cd ap-2_protos
           protoc \
             --go_out=../ap-2_protos-gen \
             --go_opt=paths=source_relative \
             --go-grpc_out=../ap-2_protos-gen \
             --go-grpc_opt=paths=source_relative \
             -I . \
-            -I $(go env GOPATH)/pkg/mod/github.com/googleapis/googleapis@latest \
+            -I ../googleapis \
             payment/payment.proto \
             order/order.proto
 
       - name: Push Generated Files
         run: |
-          cd ap2-protos-gen
-          git config user.email "you@example.com"
+          # Use the EXACT name from the clone step above
+          cd ap-2_protos-gen
+          git config user.email "yerkebulan111@users.noreply.github.com"
           git config user.name "yerkebulan111"
           git add .
-          git diff --cached --quiet || git commit -m "auto: regenerate from proto"
+          # The || true prevents the script from failing if there are no changes to commit
+          git commit -m "auto: regenerate from proto" || echo "No changes to commit"
           git push origin main
