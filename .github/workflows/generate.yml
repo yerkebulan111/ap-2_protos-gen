@@ -30,9 +30,9 @@ jobs:
         run: |
           cd ap2-protos
           protoc \
-            --go_out=../ap2-protos-gen \
+            --go_out=../ap-2_protos-gen \
             --go_opt=paths=source_relative \
-            --go-grpc_out=../ap2-protos-gen \
+            --go-grpc_out=../ap-2_protos-gen \
             --go-grpc_opt=paths=source_relative \
             -I . \
             -I $(go env GOPATH)/pkg/mod/github.com/googleapis/googleapis@latest \
